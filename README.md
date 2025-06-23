@@ -1,17 +1,34 @@
 # A-B-Testing-Analysis-Using-Python
-A-B-Testing-Analysis-Using-Python
-This Python script analyzes A/B testing data to determine whether a new version of a feature (or webpage) performs better than the old version in terms of user clicks. The script loads the dataset, processes it, and visualizes the results to compare the performance of the control group ("con") and the experimental group ("exp").
+This project analyzes an A/B test experiment comparing click-through rates between a control group and an experiment group. It demonstrates a full workflow from data cleaning and exploratory analysis to statistical comparison and logistic regression modeling.
 
-Key Features & Analysis Performed: ✅ 1. Data Loading & Initial Inspection:
+📂 Dataset
+File: ab_test_click_data.csv
 
-Reads the A/B test data from ab_test_click_data (1).csv. Displays the first few rows (.head()) and summary statistics (.describe()). ✅ 2. Click Count Analysis for Each Group:
+Description: Contains user click data with group labels (control or experiment) and a timestamp (not needed for this analysis).
 
-Counts the total number of users in each group (groupby("group")["click"].count()). Sums the total number of clicks per group (groupby("group")["click"].sum()). ✅ 3. Visualizing A/B Test Results:
+🔑 Objectives
+Clean and prepare the dataset
+Explore click distribution for each group
+Visualize click counts and rates
+Calculate key metrics: mean, variance, lift, odds ratio
+Build and evaluate a logistic regression model to predict click likelihood based on group membership
 
-Uses seaborn to create a bar chart comparing clicks for the control (con) and experimental (exp) groups. Applies a custom color palette: Yellow → No Click Black → Click ✅ 4. Annotating the Bar Chart with Click Percentages:
+🗂️ Key Steps
+1)Data Cleaning
+Removed unnecessary columns (timestamp)
+Checked for duplicates and missing values
+2)Exploratory Data Analysis
+Calculated group-wise counts, means, variances, standard deviations
+Visualized click distribution with bar charts, histograms, and a pie chart
+3)Modeling
+Encoded group as binary (0 = control, 1 = experiment)
+Trained a logistic regression model to predict the probability of a click
+Evaluated accuracy, precision, recall, and F1 score
+4)Statistical Insights
+Computed the lift in click-through rate for the experiment vs. control
+Calculated the odds ratio to compare groups
 
-Calculates the percentage of users who clicked in each group. Displays the percentages on the bar chart for better interpretation. ✅ 5. Extracting and Printing Click Data:
-
-Retrieves the exact number of clicks for the control and experimental groups. Prints the results to compare engagement levels. Python Libraries Used: 📌 pandas → Data processing & aggregation 📌 matplotlib.pyplot → Data visualization (bar charts) 📌 seaborn → Advanced statistical plotting 📌 numpy → Numerical operations
-
-Possible Improvements & Fixes: 🚀 Statistical Significance Testing: Use Chi-square test or T-test to confirm if the difference is significant. 🚀 More Visualizations: Use pie charts or histograms to show user engagement. 🚀 Data Cleaning: Handle missing or incorrect values before analysis.
+📊 Results Highlights
+The experiment group shows a measurable lift in click-through rate compared to the control group.
+Logistic regression model provides probability estimates for user clicks based on group assignment.
+Visualizations help understand overall click distribution and model predictions.
