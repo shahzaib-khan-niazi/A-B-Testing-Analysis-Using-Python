@@ -14,7 +14,7 @@ Calculate key metrics: mean, variance, lift, odds ratio
 Build and evaluate a logistic regression model to predict click likelihood based on group membership
 
 🗂️ Key Steps
-1)Data Cleaning
+#1)Data Cleaning
 Removed unnecessary columns (timestamp)
 Checked for duplicates and missing values
 2)Exploratory Data Analysis
