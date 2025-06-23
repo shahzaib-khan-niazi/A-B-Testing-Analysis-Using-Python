@@ -1,39 +1,109 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
-from statsmodels.stats.proportion import proportions_ztest
-import statsmodels.api as sm
-ab_test_data = pd.read_csv("ab_test_click_data (1).csv")
-print(ab_test_data.head())
-print(ab_test_data.describe())
-print(ab_test_data.groupby("group")["click"].count())
-print(ab_test_data.groupby("group")["click"].sum())
-palette = {0: 'lightgray', 1: 'black'}
-ax = sns.countplot(x='group', hue='click', data=ab_test_data, palette=palette)
-plt.xlabel("group")
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import precision_score, recall_score, f1_score,accuracy_score
+from sklearn.model_selection import train_test_split
 
-plt.ylabel("count")
-plt.title("Which group performs better")
-plt.legend(title='click', labels=['No', 'Yes'])
-total = ab_test_data.groupby('group')['click'].count()
-for p in ax.patches:
-    height = p.get_height()
-    group = p.get_x() + p.get_width() / 2.
-    if group < 0.5:
-        percentage = height / total.iloc[0] * 100
-    else:
-        percentage = height / total.iloc[1] * 100
-    ax.annotate(f'{percentage:.1f}%', (p.get_x() + p.get_width() / 2., height), ha='center', va='bottom')
+ab_data = pd.read_csv('ab_test_click_data (1).csv')
+print(ab_data)
+print("checking duplicates\n",ab_data.duplicated().sum())
+print("\nchecking null values\n",ab_data.isnull().sum())
+#analysis is purely about overall click-through rates between groups no need of timestamps
+
+ab_data.drop(columns=['timestamp'], inplace=True)
+print(ab_data)
+
+print("\ntotal user in each group:\n",ab_data.groupby('group')['click'].count())
+print("\ntotal clicks in each group:\n",ab_data.groupby('group')['click'].sum())
+
+print("\noverall mean click:", ab_data['click'].mean())
+print("\noverall click variance:", ab_data['click'].var())
+
+print("\nmean click rate per group:\n",ab_data.groupby('group')['click'].mean())
+print("\nvariance per group:\n",ab_data.groupby('group')['click'].var())
+print("\nstandard deviation per group:\n",ab_data.groupby('group')['click'].std())
+
+
+total_clicks = ab_data.groupby('group')['click'].sum()
+total_clicks.plot(kind='bar', color=['skyblue', 'orange'])
+plt.title('Total clicks: Control vs Experiment')
+plt.xlabel('Group')
+plt.ylabel('Number of clicks')
+
+for i, count in enumerate(total_clicks):
+    plt.text(i, count + 5, f'{count}', ha='center', va='bottom')
 plt.show()
 
+sns.histplot(data=ab_data, x='click', hue='group', multiple='dodge', bins=2)
+plt.title('click Distribution by Group')
+plt.show()
 
-clicks = ab_test_data.groupby("group")["click"].sum()
-nobs = ab_test_data.groupby("group")["click"].count()
-z_stat, p_val = proportions_ztest([clicks['exp'], clicks['con']], [nobs['exp'], nobs['con']])
-print("Z-Statistic:", z_stat)
-print("P-Value:", p_val)
-ci_con = sm.stats.proportion_confint(clicks['con'], nobs['con'], alpha=0.05, method='wilson')
-ci_exp = sm.stats.proportion_confint(clicks['exp'], nobs['exp'], alpha=0.05, method='wilson')
-print("CI Control:", ci_con)
-print("CI Experiment:", ci_exp)
+pie=ab_data['click'].value_counts()
+plt.pie(pie  ,labels=['No Click', 'Click'], autopct='%1.1f%%', startangle=180)
+plt.title('overall Click vs No Click')
+plt.ylabel('')
+plt.show()
+
+ab_data['group_num']=(ab_data['group']=='exp').astype(int)
+X = ab_data[['group_num']]
+y = ab_data['click']
+X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.2,random_state=42)
+model=LogisticRegression()
+model.fit(X_train,y_train)
+y_pred=model.predict(X_test)
+print('accuracy ',accuracy_score(y_test,y_pred))
+print('\nprecision \n',precision_score(y_test,y_pred))
+print('\nf1 score \n',f1_score(y_test,y_pred))
+print('\nrecall score\n',recall_score(y_test,y_pred))
+print(ab_data[['group', 'group_num']].head())
+
+y_pred_prob=model.predict_proba(X_test)[:, 1]
+plt.figure(figsize=(8,5))
+sns.histplot(y_pred_prob, bins=20, kde=True, color='blue')
+plt.title('Distribution of Predicted Probabilities')
+plt.xlabel('Predicted Probability of Click')
+plt.ylabel('Frequency')
+plt.show()
+
+plt.figure(figsize=(8,5))
+plt.scatter(y_pred_prob, y_test, alpha=0.3)
+plt.title('Predicted Probability vs Actual Click')
+plt.xlabel('Predicted Probability')
+plt.ylabel('Actual Click (0 or 1)')
+plt.show()
+
+y_pred_prob_zero = model.predict_proba(X_test)[:, 0]
+plt.figure(figsize=(8,5))
+sns.histplot(y_pred_prob_zero, bins=20, kde=True, color='red')
+plt.title('Distribution of Predicted Probabilities for Click = 0')
+plt.xlabel('Predicted Probability of No Click (0)')
+plt.ylabel('Frequency')
+plt.show()
+
+plt.figure(figsize=(8,5))
+plt.scatter(y_pred_prob_zero, y_test, alpha=0.3)
+plt.title('Predicted Probability (0) vs Actual Click')
+plt.xlabel('Predicted Probability of No Click (0)')
+plt.ylabel('Actual Click (0 or 1)')
+plt.show()
+
+group_clicks = ab_data.groupby('group')['click'].mean()
+diff = group_clicks['exp'] - group_clicks['con']
+lift = diff / group_clicks['con']
+print(f'\nDifference:\n' ,diff)
+print(f'\nLift: \n',lift)
+
+con_clicks = ab_data[ab_data['group'] == 'con']['click'].sum()
+exp_clicks = ab_data[ab_data['group'] == 'exp']['click'].sum()
+con_total = ab_data[ab_data['group'] == 'con']['click'].count()
+exp_total = ab_data[ab_data['group'] == 'exp']['click'].count()
+
+odds_con = con_clicks / (con_total - con_clicks)
+odds_exp = exp_clicks / (exp_total - exp_clicks)
+odds_ratio = odds_exp / odds_con
+print(f"\nodds ratio (exp vs con):",odds_ratio)
+
+print("\ncontingency table (click vs group):")
+print(pd.crosstab(ab_data['group'], ab_data['click']))
