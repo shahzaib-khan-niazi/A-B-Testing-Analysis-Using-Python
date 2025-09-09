@@ -5,7 +5,7 @@ import seaborn as sns
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import precision_score, recall_score, f1_score,accuracy_score
 from sklearn.model_selection import train_test_split
-
+import warnings
 ab_data = pd.read_csv('ab_test_click_data (1).csv')
 print(ab_data)
 print("checking duplicates\n",ab_data.duplicated().sum())
@@ -107,3 +107,23 @@ print(f"\nodds ratio (exp vs con):",odds_ratio)
 
 print("\ncontingency table (click vs group):")
 print(pd.crosstab(ab_data['group'], ab_data['click']))
+
+# optional: hide the feature name warning
+warnings.filterwarnings("ignore", category=UserWarning)
+
+X_plot = np.linspace(0, 1, 100).reshape(-1, 1)  # values between 0 and 1
+y_prob = model.predict_proba(X_plot)[:, 1]
+plt.plot(X_plot, y_prob, color="blue", label="Logistic Curve")
+plt.scatter(X, y, alpha=0.2, color="red", label="Actual data")
+plt.xlabel("Group (0=Control, 1=Experiment)")
+plt.ylabel("Probability of Click")
+plt.title("Logistic Regression on A/B Test Data")
+plt.legend()
+plt.show()
+
+if group_clicks['exp'] > group_clicks['con']:
+    print("\nThe Experiment group (exp) is better with a higher click-through rate "
+          f"({group_clicks['exp']:.2%}) compared to Control (con) ({group_clicks['con']:.2%}).")
+else:
+    print("\nThe Control group (con) performed better with a higher click-through rate "
+          f"({group_clicks['con']:.2%}) compared to Experiment (exp) ({group_clicks['exp']:.2%}).")
